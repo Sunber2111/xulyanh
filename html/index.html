@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+
+    <link rel="stylesheet" href="../css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../css/font-awesome.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            font-size: 16px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <h2 class="text-center">Xử Lý Ảnh</h2>
+
+    <div class="container">
+        <div class="inputoutput text-center">
+           <div class="row">
+            <div class="col">
+                <image id="imageSrc" alt="No Image" class="imageSrc"></image>
+            </div>
+            <div class="col">
+                <div class="caption align-middle"><input class="btn btn-danger" type="file" id="fileInput" name="file" /></div>
+            </div>
+           </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Tên Chuyển Đổi</th>
+                        <th scope="col">Dùng Thuật Toán</th>
+                        <th scope="col">Dùng Hàm Trong Thư Viện OpenCV</th>
+                        <th scope="col">Độ Giống Nhau</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td scope="row">
+                            <h3 class="align-middle text-danger">Color To Gray</h3>
+                        </td>
+                        <td><canvas id="imageSrc1" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageSrc2" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td>
+                            <div class="align-middle" id="status"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td scope="row">
+                            <h3 class="align-middle text-danger">Gray To BW</h3>
+                            <div class="text-danger">( d = 140 )</div>
+                        </td>
+                        <td><canvas id="imageSrc3" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageSrc4" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td>
+                            <div class="align-middle" id="status1">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+          
+            
+        </div>
+    </div>
+
+    <script>
+
+        let imgElement = document.getElementById("imageSrc");
+        let inputElement = document.getElementById('fileInput');
+        inputElement.addEventListener('change', (e) => {
+            imgElement.src = URL.createObjectURL(e.target.files[0]);
+        }, false);
+
+        imgElement.onload = function () {
+
+            let src = cv.imread('imageSrc');
+            let pixel = src.ucharPtr(0, 0);
+            let sum = 0, n = 0, Midle = 0;
+            let test = new cv.Mat(src.size(), 0);
+            let dst = new cv.Mat();
+            let dst1 = new cv.Mat();
+
+
+            cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY); // dst -> dùng thư viện chuyển hình
+            cv.threshold(dst, dst1, 140, 255, cv.THRESH_BINARY);
+
+            for (let row = 0; row < src.rows; row++) {
+                for (let col = 0; col < src.cols; col++) {
+                    n++;
+                    Midle = (src.ucharPtr(row, col)[0] + src.ucharPtr(row, col)[1] + src.ucharPtr(row, col)[2]) / 3;
+                    test.ucharPtr(row, col)[0] = Midle;
+                    sum += (100 - (Math.abs((dst.ucharPtr(row, col)[0] - Midle)) * 100 / 255));
+                }
+            }
+
+            document.getElementById('status').innerHTML = (sum / n).toFixed(2).toString() + '%';
+            cv.imshow('imageSrc1', test);
+
+            sum = 0;
+            n = 0;
+
+            for (let row = 0; row < src.rows; row++) {
+                for (let col = 0; col < src.cols; col++) {
+
+                    if (test.ucharPtr(row, col)[0] > 140) {
+
+                        test.ucharPtr(row, col)[0] = 255;
+
+                        if (dst1.ucharPtr(row, col)[0] === 255)
+                            sum++;
+                    }
+                    else {
+                        test.ucharPtr(row, col)[0] = 0;
+                        if (dst1.ucharPtr(row, col)[0] === 0)
+                            sum++;
+                    }
+
+                    n++;
+                }
+            }
+
+            document.getElementById('status1').innerHTML = (sum * 100 / n).toFixed(2).toString() + '%';
+            cv.imshow('imageSrc3', test);
+
+            cv.imshow('imageSrc2', dst);
+
+            cv.imshow('imageSrc4', dst1);
+
+            src.delete();
+            dst.delete();
+        }
+    </script>
+
+    <script async src="../js/opencv.js" type="text/javascript"></script>
+    <script src="../js/jquery-3.4.1.min.js"></script>
+    <script src="../js/popper.min.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+</body>
+
+</html>
