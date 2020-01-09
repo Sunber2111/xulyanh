@@ -64,6 +64,17 @@
                     </tr>
                     <tr>
                         <td scope="row">
+                            <h3 class="align-middle text-danger">Gray To BW</h3>
+                            <div class="text-danger">(histogram equalization)</div>
+                        </td>
+                        <td><canvas id="imageSrc8" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        
+                        <td>
+                            <div class="align-middle" id="status1">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td scope="row">
                             <h3 class="align-middle text-danger">Tăng Sáng</h3>
                         </td>
                         <td><canvas id="imageSrc5" alt="No Image" class="imageSrc text-left"></canvas></td>
@@ -84,6 +95,16 @@
                                 id="formControlRange1">
 
                             <div class="text-warning" id="numrange1"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td scope="row">
+                            <h3 class="align-middle text-danger">Ảnh Âm Bản</h3>
+                        </td>
+                        <td><canvas id="imageSrc7" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageSrc9" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td>
+                            <div class="align-middle" id="status2">
                         </td>
                     </tr>
                 </tbody>
@@ -159,6 +180,9 @@
 
         }, false);
 
+
+        let arr = {};
+        let h = {};
         imgElement.onload = function () {
 
             let src = cv.imread('imageSrc');
@@ -167,22 +191,74 @@
             let test = new cv.Mat(src.size(), 0);
             let dst = new cv.Mat(src.size(), 0);
             let dst1 = new cv.Mat();
+            let histogram = new cv.Mat(src.size(), 0);
+            let anhAmBan = new cv.Mat(src.size(), 0);
 
 
-            cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY); // dst -> dùng thư viện chuyển hình
+            // Khởi Tạo Mảng Lưu Gía Trị 0 -> 255
+            for (let index = 0; index < 256; index++) {
+                arr[index] = 0;
+                h[index]=0;
+            }
+
+            //          input  output   tên hàm chuyển
+            cv.cvtColor(src,    dst,     cv.COLOR_RGBA2GRAY); // -> dùng thư viện chuyển hình
+
+
             cv.threshold(dst, dst1, 140, 255, cv.THRESH_BINARY);
 
             for (let row = 0; row < src.rows; row++) {
                 for (let col = 0; col < src.cols; col++) {
                     n++;
-                    Midle = (src.ucharPtr(row, col)[0] + src.ucharPtr(row, col)[1] + src.ucharPtr(row, col)[2]) / 3;
+
+                    Midle = Math.round((src.ucharPtr(row, col)[0] + src.ucharPtr(row, col)[1] + src.ucharPtr(row, col)[2]) / 3);
+
                     test.ucharPtr(row, col)[0] = Midle;
+
+                    anhAmBan.ucharPtr(row, col)[0] = 255 - Midle;
+
+                    arr[Midle] += 1;
+
                     sum += (100 - (Math.abs((dst.ucharPtr(row, col)[0] - Midle)) * 100 / 255));
                 }
             }
 
+            h[0]=arr[0];
+
+            
+            // Tính Hàm chi phí H(i)
+            for (let i = 1; i <= 255; i++) {
+                    h[i]= h[i-1]+arr[i];
+            }
+            
+            let minHi=h['0'],maxHi=h['255'];
+
+            let d = maxHi - minHi;
+           
+
+            // Tính K(i)
+            for (let row = 0; row < src.rows; row++) {
+                for (let col = 0; col < src.cols; col++) {
+
+                    histogram.ucharPtr(row,col)[0] = Math.round( ( (h[dst.ucharPtr(row,col)[0]]-minHi) / d ) *255 ) ;
+
+                }
+            }
+
+            // ảnh âm bản tạo từ thư viện opencv
+            const imgnot = new cv.Mat();
+
+            cv.bitwise_not(dst,imgnot);
+
+            cv.imshow('imageSrc9', imgnot);
+
+            document.getElementById('status2').innerHTML = calculator(anhAmBan,imgnot) + '%';
+
             document.getElementById('status').innerHTML = (sum / n).toFixed(2).toString() + '%';
+
             cv.imshow('imageSrc1', test);
+
+            cv.imshow('imageSrc8', histogram);
 
             sum = 0;
             n = 0;
@@ -214,11 +290,30 @@
 
             cv.imshow('imageSrc4', dst1);
 
+            cv.imshow('imageSrc7', anhAmBan);
+
             cv.imshow('imageSrc5', dst);
 
             cv.imshow('imageSrc6', dst);
+
             src.delete();
             dst.delete();
+        }
+
+
+        //Hàm Tính Độ khác biệt giữa hai bức ảnh
+        calculator = (src, dst)=>{
+
+            let n= src.rows*src.cols ,sum=0;
+
+            for (let row = 0; row < src.rows; row++) {
+                for (let col = 0; col < src.cols; col++) {
+
+                    sum += (100 - (Math.abs((dst.ucharPtr(row, col)[0] - src.ucharPtr(row, col)[0])) * 100 / 255));
+                }
+            }
+
+            return (sum / n).toFixed(2);
         }
     </script>
 
