@@ -1,0 +1,2 @@
+Bước 1: Tính tần số suất hiện của cường độ điểm ảnh từ 0 -> 255
+Bước 2: Tính hàm chi phí theo công thức:

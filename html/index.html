@@ -11,16 +11,16 @@
         * {
             margin: 0;
             padding: 0;
-            font-size: 16px;
+            font-size: 14px;
         }
     </style>
 
 </head>
 
 <body>
-    <h2 class="text-center mt-3">Xử Lý Ảnh</h2>
+    <h1 class="text-center mt-3">Xử Lý Ảnh</h1>
 
-    <div class="container">
+    <div class="container-fluid">
         <div class="inputoutput text-center">
             <div class="row">
                 <div class="col">
@@ -31,7 +31,7 @@
                             name="file" /></div>
                 </div>
             </div>
-            <table class="table">
+            <table class="table mt-3">
                 <thead>
                     <tr>
                         <th scope="col">Tên Chuyển Đổi</th>
@@ -44,11 +44,23 @@
                     <tr>
                         <td scope="row">
                             <h3 class="align-middle text-danger">Color To Gray</h3>
+                            <h5 class="align-middle text-danger"> (Trung Bình Cộng RGB) </h5>
                         </td>
-                        <td><canvas id="imageSrc1" alt="No Image" class="imageSrc text-left"></canvas></td>
-                        <td><canvas id="imageSrc2" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageGray" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageGrayCV1" alt="No Image" class="imageSrc text-left"></canvas></td>
                         <td>
                             <div class="align-middle" id="status"></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td scope="row">
+                            <h3 class="align-middle text-danger">Color To Gray</h3>
+                            <h5 class="align-middle text-danger"> ( Trọng Số ) </h5>
+                        </td>
+                        <td><canvas id="imageGrayAnpha" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageGrayCV" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td>
+                            <div class="align-middle" id="statusA"></div>
                         </td>
                     </tr>
                     <tr>
@@ -56,28 +68,28 @@
                             <h3 class="align-middle text-danger">Gray To BW</h3>
                             <div class="text-danger">( d = 140 )</div>
                         </td>
-                        <td><canvas id="imageSrc3" alt="No Image" class="imageSrc text-left"></canvas></td>
-                        <td><canvas id="imageSrc4" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageBw" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageBwCV" alt="No Image" class="imageSrc text-left"></canvas></td>
                         <td>
-                            <div class="align-middle" id="status1">
+                            <div class="align-middle" id="status1"></div>
+
                         </td>
                     </tr>
                     <tr>
                         <td scope="row">
-                            <h3 class="align-middle text-danger">Gray To BW</h3>
-                            <div class="text-danger">(histogram equalization)</div>
+                            <h3 class="align-middle text-danger">Histogram Equalization</h3>
                         </td>
-                        <td><canvas id="imageSrc8" alt="No Image" class="imageSrc text-left"></canvas></td>
-                        
+                        <td><canvas id="imageHE" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageHECV" alt="No Image" class="imageSrc text-left"></canvas></td>
                         <td>
-                            <div class="align-middle" id="status1">
+                            <div class="align-middle" id="statusHE"></div>
                         </td>
                     </tr>
                     <tr>
                         <td scope="row">
                             <h3 class="align-middle text-danger">Tăng Sáng</h3>
                         </td>
-                        <td><canvas id="imageSrc5" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageTS" alt="No Image" class="imageSrc text-left"></canvas></td>
                         <td>
                             <input type="range" min="0" max="255" class="form-control-range" value="0"
                                 id="formControlRange">
@@ -89,7 +101,7 @@
                         <td scope="row">
                             <h3 class="align-middle text-danger">Giảm Sáng</h3>
                         </td>
-                        <td><canvas id="imageSrc6" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageGS" alt="No Image" class="imageSrc text-left"></canvas></td>
                         <td>
                             <input type="range" min="0" max="255" class="form-control-range" value="0"
                                 id="formControlRange1">
@@ -101,8 +113,8 @@
                         <td scope="row">
                             <h3 class="align-middle text-danger">Ảnh Âm Bản</h3>
                         </td>
-                        <td><canvas id="imageSrc7" alt="No Image" class="imageSrc text-left"></canvas></td>
-                        <td><canvas id="imageSrc9" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageAb" alt="No Image" class="imageSrc text-left"></canvas></td>
+                        <td><canvas id="imageAbCV" alt="No Image" class="imageSrc text-left"></canvas></td>
                         <td>
                             <div class="align-middle" id="status2">
                         </td>
@@ -114,213 +126,12 @@
         </div>
     </div>
 
-    <script>
 
-        let imgElement = document.getElementById("imageSrc");
-        let inputElement = document.getElementById('fileInput');
-        let rangeBar = document.getElementById('formControlRange');
-        let rangeBar1 = document.getElementById('formControlRange1');
-
-        rangeBar1.addEventListener('change', (e) => {
-
-            let value = Number(e.target.value);
-            if (imgElement.src !== '') {
-                let src = cv.imread('imageSrc');
-
-                let dst = new cv.Mat();
-
-                cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
-
-                console.log(dst.ucharPtr(dst.rows - 1, dst.cols - 1)[0]);
-                for (let row = 0; row < dst.rows; row++) {
-                    for (let col = 0; col < dst.cols; col++) {
-                        if (dst.ucharPtr(row, col)[0] - value > 0)
-                            dst.ucharPtr(row, col)[0] = dst.ucharPtr(row, col)[0] - value;
-                        else dst.ucharPtr(row, col)[0] = 0;
-                    }
-                }
-
-                cv.imshow('imageSrc6', dst);
-                console.log(dst.ucharPtr(dst.rows - 1, dst.cols - 1)[0]);
-
-            }
-            document.getElementById('numrange1').innerHTML = 'Cường Độ ' + value;
-
-        }, false);
-
-        rangeBar.addEventListener('change', (e) => {
-
-            let value = Number(e.target.value);
-            if (imgElement.src !== '') {
-                let src = cv.imread('imageSrc');
-
-                let dst = new cv.Mat();
-
-                cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
-
-                console.log(dst.ucharPtr(dst.rows - 1, dst.cols - 1)[0]);
-                for (let row = 0; row < dst.rows; row++) {
-                    for (let col = 0; col < dst.cols; col++) {
-                        if (dst.ucharPtr(row, col)[0] + value < 255)
-                            dst.ucharPtr(row, col)[0] = dst.ucharPtr(row, col)[0] + value;
-                        else dst.ucharPtr(row, col)[0] = 255;
-                    }
-                }
-
-                cv.imshow('imageSrc5', dst);
-                console.log(dst.ucharPtr(dst.rows - 1, dst.cols - 1)[0]);
-
-            }
-            document.getElementById('numrange').innerHTML = 'Cường Độ ' + value;
-
-        }, false);
-
-        inputElement.addEventListener('change', (e) => {
-            imgElement.src = URL.createObjectURL(e.target.files[0]);
-
-        }, false);
-
-
-        let arr = {};
-        let h = {};
-        imgElement.onload = function () {
-
-            let src = cv.imread('imageSrc');
-            let pixel = src.ucharPtr(0, 0);
-            let sum = 0, n = 0, Midle = 0;
-            let test = new cv.Mat(src.size(), 0);
-            let dst = new cv.Mat(src.size(), 0);
-            let dst1 = new cv.Mat();
-            let histogram = new cv.Mat(src.size(), 0);
-            let anhAmBan = new cv.Mat(src.size(), 0);
-
-
-            // Khởi Tạo Mảng Lưu Gía Trị 0 -> 255
-            for (let index = 0; index < 256; index++) {
-                arr[index] = 0;
-                h[index]=0;
-            }
-
-            //          input  output   tên hàm chuyển
-            cv.cvtColor(src,    dst,     cv.COLOR_RGBA2GRAY); // -> dùng thư viện chuyển hình
-
-
-            cv.threshold(dst, dst1, 140, 255, cv.THRESH_BINARY);
-
-            for (let row = 0; row < src.rows; row++) {
-                for (let col = 0; col < src.cols; col++) {
-                    n++;
-
-                    Midle = Math.round((src.ucharPtr(row, col)[0] + src.ucharPtr(row, col)[1] + src.ucharPtr(row, col)[2]) / 3);
-
-                    test.ucharPtr(row, col)[0] = Midle;
-
-                    anhAmBan.ucharPtr(row, col)[0] = 255 - Midle;
-
-                    arr[Midle] += 1;
-
-                    sum += (100 - (Math.abs((dst.ucharPtr(row, col)[0] - Midle)) * 100 / 255));
-                }
-            }
-
-            h[0]=arr[0];
-
-            
-            // Tính Hàm chi phí H(i)
-            for (let i = 1; i <= 255; i++) {
-                    h[i]= h[i-1]+arr[i];
-            }
-            
-            let minHi=h['0'],maxHi=h['255'];
-
-            let d = maxHi - minHi;
-           
-
-            // Tính K(i)
-            for (let row = 0; row < src.rows; row++) {
-                for (let col = 0; col < src.cols; col++) {
-
-                    histogram.ucharPtr(row,col)[0] = Math.round( ( (h[dst.ucharPtr(row,col)[0]]-minHi) / d ) *255 ) ;
-
-                }
-            }
-
-            // ảnh âm bản tạo từ thư viện opencv
-            const imgnot = new cv.Mat();
-
-            cv.bitwise_not(dst,imgnot);
-
-            cv.imshow('imageSrc9', imgnot);
-
-            document.getElementById('status2').innerHTML = calculator(anhAmBan,imgnot) + '%';
-
-            document.getElementById('status').innerHTML = (sum / n).toFixed(2).toString() + '%';
-
-            cv.imshow('imageSrc1', test);
-
-            cv.imshow('imageSrc8', histogram);
-
-            sum = 0;
-            n = 0;
-
-            for (let row = 0; row < src.rows; row++) {
-                for (let col = 0; col < src.cols; col++) {
-
-                    if (test.ucharPtr(row, col)[0] > 140) {
-
-                        test.ucharPtr(row, col)[0] = 255;
-
-                        if (dst1.ucharPtr(row, col)[0] === 255)
-                            sum++;
-                    }
-                    else {
-                        test.ucharPtr(row, col)[0] = 0;
-                        if (dst1.ucharPtr(row, col)[0] === 0)
-                            sum++;
-                    }
-
-                    n++;
-                }
-            }
-
-            document.getElementById('status1').innerHTML = (sum * 100 / n).toFixed(2).toString() + '%';
-            cv.imshow('imageSrc3', test);
-
-            cv.imshow('imageSrc2', dst);
-
-            cv.imshow('imageSrc4', dst1);
-
-            cv.imshow('imageSrc7', anhAmBan);
-
-            cv.imshow('imageSrc5', dst);
-
-            cv.imshow('imageSrc6', dst);
-
-            src.delete();
-            dst.delete();
-        }
-
-
-        //Hàm Tính Độ khác biệt giữa hai bức ảnh
-        calculator = (src, dst)=>{
-
-            let n= src.rows*src.cols ,sum=0;
-
-            for (let row = 0; row < src.rows; row++) {
-                for (let col = 0; col < src.cols; col++) {
-
-                    sum += (100 - (Math.abs((dst.ucharPtr(row, col)[0] - src.ucharPtr(row, col)[0])) * 100 / 255));
-                }
-            }
-
-            return (sum / n).toFixed(2);
-        }
-    </script>
-
-    <script async src="../js/opencv.js" type="text/javascript"></script>
-    <script src="../js/jquery-3.4.1.min.js"></script>
-    <script src="../js/popper.min.js"></script>
-    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/opencv.js" type="text/javascript"></script>
+    <script src="../js/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="../js/popper.min.js" type="text/javascript"></script>
+    <script src="../js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="../js/index.js" type="text/javascript"></script>
 </body>
 
 </html>
